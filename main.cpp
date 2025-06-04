@@ -1,9 +1,11 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
+#include <ctime>
 
 // Forward declaration
-void showGameOverScreen(sf::Font& font);
+void showGameOverScreen(sf::Font& font, int finalScore);
 
 void runGame(sf::Font& font) {
     sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher Game");
@@ -20,7 +22,19 @@ void runGame(sf::Font& font) {
     basket.setScale(2.f, 2.f); // double size
     basket.setPosition(512, 700);
 
+    sf::Texture appleTex;
+    if (!appleTex.loadFromFile("apple.png")) {
+        std::cerr << "Failed to load apple.png\n";
+        return;
+    }
+    appleTex.setSmooth(true);
+    sf::Sprite apple(appleTex);
+    apple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y)); // crop width
+    apple.setScale(1.f, 1.f); // normal size
+    apple.setPosition(static_cast<float>(std::rand() % (1024 - 50)), 0.f);
+
     float speed = 300.f;
+    float appleSpeed = 150.f;
 
     sf::Text timeText;
     timeText.setFont(font);
@@ -28,7 +42,16 @@ void runGame(sf::Font& font) {
     timeText.setFillColor(sf::Color::White);
     timeText.setPosition(860, 10);
 
+    sf::Text scoreText;
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(24);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setPosition(860, 40);
+
     sf::Clock gameClock;
+
+    int score = 0;
+    int lastPrintedSecond = -1;
 
     while (window.isOpen()) {
         sf::Time delta = clock.restart();
@@ -49,37 +72,62 @@ void runGame(sf::Font& font) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && pos.y + basket.getGlobalBounds().height < window.getSize().y)
             basket.move(0, speed * delta.asSeconds());
 
-        // Time
-        int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
-        std::stringstream ss;
-        ss << "Time: " << seconds;
-        timeText.setString(ss.str());
+        // Apple falling
+        apple.move(0, appleSpeed * delta.asSeconds());
 
-        std::cout << "Time: " << seconds << "s\n";
+        // Check collision basket & apple
+        if (apple.getGlobalBounds().intersects(basket.getGlobalBounds())) {
+            score++;
+            apple.setPosition(static_cast<float>(std::rand() % (1024 - 50)), 0.f);
+        }
+
+        // Check if apple touches bottom of window
+        if (apple.getPosition().y > window.getSize().y) {
+            apple.setPosition(static_cast<float>(std::rand() % (1024 - 50)), 0.f);
+        }
+
+        // Time display & print once per second
+        int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
+        if (seconds != lastPrintedSecond) {
+            lastPrintedSecond = seconds;
+            std::cout << "Time: " << seconds << "s\n";
+        }
+
+        std::stringstream ssTime;
+        ssTime << "Time: " << seconds;
+        timeText.setString(ssTime.str());
+
+        std::stringstream ssScore;
+        ssScore << "Score: " << score;
+        scoreText.setString(ssScore.str());
 
         // After 20 seconds, show game over screen
         if (seconds >= 20) {
             window.close();
-            showGameOverScreen(font); // NEW: show game over screen
+            std::cout << "Window changed: Game -> Game Over\n";
+            showGameOverScreen(font, score);
             return;
         }
 
         // Draw
         window.clear(sf::Color::Black);
         window.draw(basket);
+        window.draw(apple);
         window.draw(timeText);
+        window.draw(scoreText);
         window.display();
     }
 }
 
-void showGameOverScreen(sf::Font& font) {
+void showGameOverScreen(sf::Font& font, int finalScore) {
     sf::RenderWindow overWindow(sf::VideoMode(1024, 768), "Game Over");
 
     sf::Text gameOver("Game Over", font, 60);
     gameOver.setFillColor(sf::Color::Red);
     gameOver.setPosition(340, 200);
 
-    sf::Text scoreText("Score: ", font, 40);  // We'll update this later
+    std::string scoreStr = "Score: " + std::to_string(finalScore);
+    sf::Text scoreText(scoreStr, font, 40);
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(440, 320);
 
@@ -92,7 +140,8 @@ void showGameOverScreen(sf::Font& font) {
         }
 
         if (waitClock.getElapsedTime().asSeconds() >= 5) {
-            overWindow.close();  // Close after 5 seconds
+            overWindow.close();
+            std::cout << "Window changed: Game Over -> Menu\n";
         }
 
         overWindow.clear(sf::Color::Black);
@@ -103,6 +152,8 @@ void showGameOverScreen(sf::Font& font) {
 }
 
 int main() {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
     sf::Font font;
     if (!font.loadFromFile("arial.ttf")) {
         std::cerr << "Failed to load arial.ttf\n";
@@ -127,6 +178,8 @@ int main() {
 
         bool startGame = false;
 
+        std::cout << "Window changed: Menu opened\n";
+
         while (menu.isOpen() && !startGame) {
             sf::Event event;
             while (menu.pollEvent(event)) {
@@ -139,6 +192,7 @@ int main() {
                     if (button.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
                         startGame = true;
                         menu.close();
+                        std::cout << "Window changed: Menu -> Game\n";
                     }
                 }
             }
@@ -157,3 +211,4 @@ int main() {
 
     return 0;
 }
+
