@@ -2,3 +2,5 @@ Bugs/ Don't forget:
 - Basket starts inside the walls when the game window opens
 - Add texture to the background
 - Add a small window at the top right corner where the time and score. No apples should be able to spawn there
+- The basket has to have a max height it can go
+- The apples have to have a minimum height to spawn and shouldn't spawn outside the window
