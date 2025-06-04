@@ -39,11 +39,15 @@ std::vector<ScoreEntry> loadTopScores(const std::string& filename = "bestScores.
 void showTopScores(sf::Font& font) {
     auto scores = loadTopScores();
 
-    sf::RenderWindow topWindow(sf::VideoMode(600, 600), "Top 10 Scores");
+    sf::RenderWindow topWindow(sf::VideoMode(1024, 768), "Catcher - Top 10");
 
     sf::Text title("Top 10 Scores", font, 48);
     title.setPosition(150, 20);
     title.setFillColor(sf::Color::White);
+
+    sf::Text continueText("Press Enter to return to menu", font, 30);
+    continueText.setPosition(250, 650);
+    continueText.setFillColor(sf::Color::Yellow);
 
     std::vector<sf::Text> scoreTexts;
     for (size_t i = 0; i < scores.size(); ++i) {
@@ -63,12 +67,16 @@ void showTopScores(sf::Font& font) {
         while (topWindow.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 topWindow.close();
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
+                topWindow.close();
         }
 
         topWindow.clear(sf::Color::Black);
         topWindow.draw(title);
         for (auto& t : scoreTexts)
             topWindow.draw(t);
+        topWindow.draw(continueText);
         topWindow.display();
     }
 }
@@ -83,7 +91,7 @@ float randomX(float maxX) {
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score);
 
 void runGame(sf::Font& font, const std::string& playerName) {
-    sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher Game");
+    sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher - Game");
     sf::Clock clock;
 
     sf::Texture basketTex;
@@ -165,7 +173,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
         timeText.setString("Time: " + std::to_string(seconds));
         scoreText.setString("Points: " + std::to_string(score));
 
-        if (seconds >= 20) {
+        if (seconds >= 60) {
             window.close();
 
             std::ofstream file("bestScores.txt", std::ios::app);
@@ -191,7 +199,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
 }
 
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score) {
-    sf::RenderWindow overWindow(sf::VideoMode(1024, 768), "Game Over");
+    sf::RenderWindow overWindow(sf::VideoMode(1024, 768), "Catcher - Game Over");
 
     sf::Text gameOverText("Game Over", font, 60);
     gameOverText.setFillColor(sf::Color::Red);
@@ -205,30 +213,33 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(440, 350);
 
-    sf::Clock waitClock;
+    sf::Text continueText("Press Enter to return to menu", font, 30);
+    continueText.setFillColor(sf::Color::Yellow);
+    continueText.setPosition(320, 500);
 
     while (overWindow.isOpen()) {
         sf::Event event;
         while (overWindow.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 overWindow.close();
-        }
 
-        if (waitClock.getElapsedTime().asSeconds() >= 5) {
-            overWindow.close();
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
+                overWindow.close();
         }
 
         overWindow.clear(sf::Color::Black);
         overWindow.draw(gameOverText);
         overWindow.draw(playerText);
         overWindow.draw(scoreText);
+        overWindow.draw(continueText);
         overWindow.display();
     }
 }
 
+
 // NOVA FUNÇÃO: Pedir nome do jogador numa janela SFML
 std::string askPlayerName(sf::Font& font) {
-    sf::RenderWindow inputWindow(sf::VideoMode(600, 200), "Introduza o seu nome");
+    sf::RenderWindow inputWindow(sf::VideoMode(1024, 768), "Catcher - Name");
 
     sf::Text prompt("Digite seu nome e pressione ENTER:", font, 24);
     prompt.setPosition(20, 20);
@@ -280,7 +291,7 @@ int main() {
     }
 
     while (true) {
-        sf::RenderWindow menu(sf::VideoMode(1024, 768), "Main Menu");
+        sf::RenderWindow menu(sf::VideoMode(1024, 768), "Catcher - Main Menu");
 
         sf::Text title("Catch Game", font, 48);
         title.setPosition(350, 200);
@@ -294,6 +305,10 @@ int main() {
         topScoresButton.setPosition(380, 420);
         topScoresButton.setFillColor(sf::Color::Blue);
 
+        sf::RectangleShape quitButton(sf::Vector2f(250, 60));
+        quitButton.setPosition(380, 520);
+        quitButton.setFillColor(sf::Color::Red);
+
         sf::Text playText("Play", font, 30);
         playText.setPosition(480, 335);
         playText.setFillColor(sf::Color::Black);
@@ -301,6 +316,10 @@ int main() {
         sf::Text scoresText("Top 10 Scores", font, 25);
         scoresText.setPosition(410, 435);
         scoresText.setFillColor(sf::Color::White);
+
+        sf::Text quitText("Sair do Jogo", font, 25);
+        quitText.setPosition(430, 535);
+        quitText.setFillColor(sf::Color::White);
 
         while (menu.isOpen()) {
             sf::Event event;
@@ -320,16 +339,19 @@ int main() {
                             runGame(font, playerName);
                         }
                         menu.create(sf::VideoMode(1024, 768), "Main Menu");
-                        ; // Recria a janela para o menu após o jogo ou cancelamento
                     }
                     else if (topScoresButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         menu.close();
                         if (!std::filesystem::exists("bestScores.txt")) {
-                            std::cout << "bestScores.txt não existe!\n";
+                            std::cout << "bestScores.txt nao existe!\n";
                         } else {
                             showTopScores(font);
                         }
-                        menu.create(sf::VideoMode(1024, 768), "Main Menu");    // Recria o menu após fechar a janela Top Scores
+                        menu.create(sf::VideoMode(1024, 768), "Main Menu"); // Recria o menu após fechar a janela Top Scores
+                    }
+                    else if (quitButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        menu.close();
+                        return 0; // Termina o programa ao clicar "Sair do Jogo"
                     }
                 }
             }
@@ -340,6 +362,8 @@ int main() {
             menu.draw(topScoresButton);
             menu.draw(playText);
             menu.draw(scoresText);
+            menu.draw(quitButton);
+            menu.draw(quitText);
             menu.display();
         }
     }

@@ -5,3 +5,8 @@ Bugs/ Don't forget:
 - The basket has to have a max height it can go
 - The apples have to have a minimum height to spawn and shouldn't spawn outside the window
 - Crop the basket and the apple to the true size (bounding boxes are too big)
+- Add a max nr of characters in the name
+- Bug while saving scores with big names (unconfirmed)
+- Add increasing speed and more apples
+- Put everithing in English
+- Add credits
