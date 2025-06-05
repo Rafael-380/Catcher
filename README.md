@@ -1,12 +1,9 @@
 Bugs/ Don't forget:
-- Basket starts inside the walls when the game window opens
-- Add texture to the background
-- Add a small window at the top right corner where the time and score. No apples should be able to spawn there
-- The basket has to have a max height it can go
-- The apples have to have a minimum height to spawn and shouldn't spawn outside the window
-- Crop the basket and the apple to the true size (bounding boxes are too big)
-- Add a max nr of characters in the name
+- Add texture to the backgrounds of the pages (optional)
+- The basket has to have a max height it can go (optional)
+- The apples shouldn't spawn inside the timer/points
+    - Create a small strip of blacka at the top with the info
+- Add a max nr of characters in the name (optional)
 - Bug while saving scores with big names (unconfirmed)
-- Add increasing speed and more apples
-- Put everithing in English
-- Add credits
+- Put everything in English
+- Texts are misalligned

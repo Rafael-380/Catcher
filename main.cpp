@@ -89,6 +89,7 @@ float randomX(float maxX) {
 }
 
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score);
+
 void runGame(sf::Font& font, const std::string& playerName) {
     sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher - Game");
     sf::Clock clock;
@@ -118,13 +119,24 @@ void runGame(sf::Font& font, const std::string& playerName) {
     );
 
     sf::Sprite basket(basketTex);
-    basket.setTextureRect(sf::IntRect(0, 0, 50, basketTex.getSize().y));
+    //basket.setTextureRect(sf::IntRect(0, 0, 50, basketTex.getSize().y));
+    basket.setTextureRect(sf::IntRect(
+        4,                                // left crop (start 4px in)
+        10,                                // top crop (start 8px down)
+        50 - 8,                            // width after removing 4px from each side
+        basketTex.getSize().y - 20        // height after removing 8px from top and bottom
+        ));
     basket.setScale(2.f, 2.f);
-    basket.setPosition(512, 700);
+    basket.setPosition(512, 650);
 
     std::vector<sf::Sprite> apples;
     sf::Sprite firstApple(appleTex);
-    firstApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+    firstApple.setTextureRect(sf::IntRect(
+        10,
+        9,
+        50 - 20,
+        appleTex.getSize().y - (9+2)            //cropping 9px on top plus 2 at the bottom
+        ));
     firstApple.setPosition(randomX(window.getSize().x - 50), 0);
     apples.push_back(firstApple);
 
@@ -134,19 +146,19 @@ void runGame(sf::Font& font, const std::string& playerName) {
     sf::Text timeText;
     timeText.setFont(font);
     timeText.setCharacterSize(24);
-    timeText.setFillColor(sf::Color::White);
+    timeText.setFillColor(sf::Color::Black);
     timeText.setPosition(860, 10);
 
     sf::Text scoreText;
     scoreText.setFont(font);
     scoreText.setCharacterSize(24);
-    scoreText.setFillColor(sf::Color::White);
+    scoreText.setFillColor(sf::Color::Black);
     scoreText.setPosition(860, 40);
 
     sf::Text playerText;
     playerText.setFont(font);
     playerText.setCharacterSize(24);
-    playerText.setFillColor(sf::Color::White);
+    playerText.setFillColor(sf::Color::Black);
     playerText.setPosition(860, 70);
     playerText.setString("Player: " + playerName);
 
@@ -177,7 +189,13 @@ void runGame(sf::Font& font, const std::string& playerName) {
         // Adiciona nova maçã a cada 10 segundos (até 6 no total)
         if (appleClock.getElapsedTime().asSeconds() >= 10.f && applesToSpawn < 6) {
             sf::Sprite newApple(appleTex);
-            newApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+            //newApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+            newApple.setTextureRect(sf::IntRect(
+                10,                       // crop 10 px from the left
+                9,                        // crop 9 px from the top
+                50 - 20,                  // crop 10 px from right, width becomes 30
+                appleTex.getSize().y - 11 // crop 2 px from bottom, total height adjusted
+                ));
             newApple.setPosition(randomX(window.getSize().x - 50), 0);
             apples.push_back(newApple);
             applesToSpawn++;
@@ -186,7 +204,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
 
         // Aumenta progressivamente a velocidade das maçãs
         float elapsedSeconds = gameClock.getElapsedTime().asSeconds();
-        float currentAppleSpeed = baseAppleSpeed + elapsedSeconds * 2.5f;
+        float currentAppleSpeed = baseAppleSpeed + elapsedSeconds * 4.0f;
 
         // Movimento e colisão das maçãs
         for (auto& apple : apples) {
