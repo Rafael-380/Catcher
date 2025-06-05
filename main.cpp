@@ -89,7 +89,6 @@ float randomX(float maxX) {
 }
 
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score);
-
 void runGame(sf::Font& font, const std::string& playerName) {
     sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher - Game");
     sf::Clock clock;
@@ -106,17 +105,31 @@ void runGame(sf::Font& font, const std::string& playerName) {
         return;
     }
 
+    sf::Texture backgroundTex;
+    if (!backgroundTex.loadFromFile("background.png")) {
+        std::cerr << "Failed to load background.png\n";
+        return;
+    }
+
+    sf::Sprite background(backgroundTex);
+    background.setScale(
+        static_cast<float>(window.getSize().x) / backgroundTex.getSize().x,
+        static_cast<float>(window.getSize().y) / backgroundTex.getSize().y
+    );
+
     sf::Sprite basket(basketTex);
     basket.setTextureRect(sf::IntRect(0, 0, 50, basketTex.getSize().y));
     basket.setScale(2.f, 2.f);
     basket.setPosition(512, 700);
 
-    sf::Sprite apple(appleTex);
-    apple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
-    apple.setPosition(randomX(window.getSize().x - 50), 0);
+    std::vector<sf::Sprite> apples;
+    sf::Sprite firstApple(appleTex);
+    firstApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+    firstApple.setPosition(randomX(window.getSize().x - 50), 0);
+    apples.push_back(firstApple);
 
     float speed = 300.f;
-    float appleSpeed = 200.f;
+    float baseAppleSpeed = 200.f;
 
     sf::Text timeText;
     timeText.setFont(font);
@@ -138,7 +151,9 @@ void runGame(sf::Font& font, const std::string& playerName) {
     playerText.setString("Player: " + playerName);
 
     sf::Clock gameClock;
+    sf::Clock appleClock;
     int score = 0;
+    int applesToSpawn = 1;
 
     while (window.isOpen()) {
         sf::Time delta = clock.restart();
@@ -148,6 +163,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
                 window.close();
         }
 
+        // Movimento do cesto
         sf::Vector2f pos = basket.getPosition();
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && pos.x > 0)
             basket.move(-speed * delta.asSeconds(), 0);
@@ -158,18 +174,35 @@ void runGame(sf::Font& font, const std::string& playerName) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && pos.y + basket.getGlobalBounds().height < window.getSize().y)
             basket.move(0, speed * delta.asSeconds());
 
-        apple.move(0, appleSpeed * delta.asSeconds());
-
-        if (apple.getPosition().y > window.getSize().y) {
-            apple.setPosition(randomX(window.getSize().x - 50), 0);
+        // Adiciona nova maçã a cada 10 segundos (até 6 no total)
+        if (appleClock.getElapsedTime().asSeconds() >= 10.f && applesToSpawn < 6) {
+            sf::Sprite newApple(appleTex);
+            newApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+            newApple.setPosition(randomX(window.getSize().x - 50), 0);
+            apples.push_back(newApple);
+            applesToSpawn++;
+            appleClock.restart();
         }
 
-        if (basket.getGlobalBounds().intersects(apple.getGlobalBounds())) {
-            score++;
-            apple.setPosition(randomX(window.getSize().x - 50), 0);
+        // Aumenta progressivamente a velocidade das maçãs
+        float elapsedSeconds = gameClock.getElapsedTime().asSeconds();
+        float currentAppleSpeed = baseAppleSpeed + elapsedSeconds * 2.5f;
+
+        // Movimento e colisão das maçãs
+        for (auto& apple : apples) {
+            apple.move(0, currentAppleSpeed * delta.asSeconds());
+
+            if (apple.getPosition().y > window.getSize().y) {
+                apple.setPosition(randomX(window.getSize().x - 50), 0);
+            }
+
+            if (basket.getGlobalBounds().intersects(apple.getGlobalBounds())) {
+                score++;
+                apple.setPosition(randomX(window.getSize().x - 50), 0);
+            }
         }
 
-        int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
+        int seconds = static_cast<int>(elapsedSeconds);
         timeText.setString("Time: " + std::to_string(seconds));
         scoreText.setString("Points: " + std::to_string(score));
 
@@ -188,9 +221,11 @@ void runGame(sf::Font& font, const std::string& playerName) {
             return;
         }
 
-        window.clear(sf::Color::Black);
+        window.clear();
+        window.draw(background);
         window.draw(basket);
-        window.draw(apple);
+        for (auto& apple : apples)
+            window.draw(apple);
         window.draw(timeText);
         window.draw(scoreText);
         window.draw(playerText);
@@ -237,7 +272,7 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
 }
 
 
-// NOVA FUNÇÃO: Pedir nome do jogador numa janela SFML
+// Pedir nome do jogador numa janela SFML
 std::string askPlayerName(sf::Font& font) {
     sf::RenderWindow inputWindow(sf::VideoMode(1024, 768), "Catcher - Name");
 
@@ -309,6 +344,10 @@ int main() {
         quitButton.setPosition(380, 520);
         quitButton.setFillColor(sf::Color::Red);
 
+        sf::RectangleShape creditsButton(sf::Vector2f(250, 60));
+        creditsButton.setPosition(380, 620);
+        creditsButton.setFillColor(sf::Color::Yellow);
+
         sf::Text playText("Play", font, 30);
         playText.setPosition(480, 335);
         playText.setFillColor(sf::Color::Black);
@@ -317,9 +356,13 @@ int main() {
         scoresText.setPosition(410, 435);
         scoresText.setFillColor(sf::Color::White);
 
-        sf::Text quitText("Sair do Jogo", font, 25);
+        sf::Text quitText("Leave Game", font, 25);
         quitText.setPosition(430, 535);
         quitText.setFillColor(sf::Color::White);
+
+        sf::Text creditsText("Credits", font, 25);
+        creditsText.setPosition(450, 635);
+        creditsText.setFillColor(sf::Color::Black);
 
         while (menu.isOpen()) {
             sf::Event event;
@@ -353,6 +396,36 @@ int main() {
                         menu.close();
                         return 0; // Termina o programa ao clicar "Sair do Jogo"
                     }
+                    else if (creditsButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        menu.close();
+                        // Abre a janela de créditos
+                        sf::RenderWindow credits(sf::VideoMode(1024, 768), "Créditos");
+                        sf::Text text("Game developed by Rafael Louro \n"
+                                      "Basket and apple designed by Rafael Louro in https://www.pixilart.com \n"
+                                      "The other textures come from https://www.freepik.com", font, 24);
+                        text.setFillColor(sf::Color::White);
+                        text.setPosition(100, 300);
+
+                        sf::Text backText("Pressione Enter para voltar", font, 22);
+                        backText.setFillColor(sf::Color::Yellow);
+                        backText.setPosition(320, 600);
+
+                        while (credits.isOpen()) {
+                            sf::Event e;
+                            while (credits.pollEvent(e)) {
+                                if (e.type == sf::Event::Closed)
+                                    credits.close();
+                                if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
+                                    credits.close();
+                            }
+                            credits.clear(sf::Color::Black);
+                            credits.draw(text);
+                            credits.draw(backText);
+                            credits.display();
+                        }
+
+                        menu.create(sf::VideoMode(1024, 768), "Main Menu");
+                    }
                 }
             }
 
@@ -364,6 +437,8 @@ int main() {
             menu.draw(scoresText);
             menu.draw(quitButton);
             menu.draw(quitText);
+            menu.draw(creditsButton);
+            menu.draw(creditsText);
             menu.display();
         }
     }
