@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
 
 struct ScoreEntry {
     std::string name;
@@ -91,6 +92,7 @@ float randomX(float maxX) {
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score);
 
 void runGame(sf::Font& font, const std::string& playerName) {
+    bool paused = false;
     sf::RenderWindow window(sf::VideoMode(1024, 768), "Catcher - Game");
     sf::Clock clock;
 
@@ -112,6 +114,11 @@ void runGame(sf::Font& font, const std::string& playerName) {
         return;
     }
 
+    sf::RectangleShape topBar;
+    topBar.setSize(sf::Vector2f(window.getSize().x, 30));
+    topBar.setPosition(0, 0);
+    topBar.setFillColor(sf::Color::Black);
+
     sf::Sprite background(backgroundTex);
     background.setScale(
         static_cast<float>(window.getSize().x) / backgroundTex.getSize().x,
@@ -126,7 +133,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
         50 - 8,                            // width after removing 4px from each side
         basketTex.getSize().y - 20        // height after removing 8px from top and bottom
         ));
-    basket.setScale(2.f, 2.f);
+    basket.setScale(2.5f, 2.5f);
     basket.setPosition(512, 650);
 
     std::vector<sf::Sprite> apples;
@@ -137,30 +144,47 @@ void runGame(sf::Font& font, const std::string& playerName) {
         50 - 20,
         appleTex.getSize().y - (9+2)            //cropping 9px on top plus 2 at the bottom
         ));
-    firstApple.setPosition(randomX(window.getSize().x - 50), 0);
+    firstApple.setPosition(randomX(window.getSize().x - 50), 50);
     apples.push_back(firstApple);
 
     float speed = 300.f;
     float baseAppleSpeed = 200.f;
 
-    sf::Text timeText;
-    timeText.setFont(font);
-    timeText.setCharacterSize(24);
-    timeText.setFillColor(sf::Color::Black);
-    timeText.setPosition(860, 10);
+    // Dimensões da janela
+    float windowWidth = 1024;
 
-    sf::Text scoreText;
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(24);
-    scoreText.setFillColor(sf::Color::Black);
-    scoreText.setPosition(860, 40);
-
+    // Texto: Player (esquerda)
     sf::Text playerText;
     playerText.setFont(font);
-    playerText.setCharacterSize(24);
-    playerText.setFillColor(sf::Color::Black);
-    playerText.setPosition(860, 70);
+    playerText.setCharacterSize(18);
+    playerText.setFillColor(sf::Color::White);
     playerText.setString("Player: " + playerName);
+    playerText.setPosition(10, 5);  // Margem esquerda
+
+    // Texto: Tempo (centro)
+    sf::Text timeText;
+    timeText.setFont(font);
+    timeText.setCharacterSize(18);
+    timeText.setFillColor(sf::Color::White);
+    timeText.setString("Time: 00:00");  // Atualiza este valor conforme o tempo real
+    float timeTextWidth = timeText.getLocalBounds().width;
+    timeText.setPosition((windowWidth - timeTextWidth) / 2, 5);
+
+    // Texto: Score (direita)
+    sf::Text scoreText;
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(18);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setString("Score: 0");  // Atualiza este valor conforme o score real
+    float scoreTextWidth = scoreText.getLocalBounds().width;
+    scoreText.setPosition(windowWidth - scoreTextWidth - 30, 5);  // Margem direita
+
+    sf::Text pauseText("PAUSED\nPress SPACE to resume", font, 48);
+    pauseText.setFillColor(sf::Color::White);
+    pauseText.setOutlineColor(sf::Color::Black);
+    pauseText.setOutlineThickness(2);
+    pauseText.setPosition(250, 300); // Ajusta conforme necessário
+
 
     sf::Clock gameClock;
     sf::Clock appleClock;
@@ -173,80 +197,90 @@ void runGame(sf::Font& font, const std::string& playerName) {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
-        }
-
-        // Movimento do cesto
-        sf::Vector2f pos = basket.getPosition();
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && pos.x > 0)
-            basket.move(-speed * delta.asSeconds(), 0);
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && pos.x + basket.getGlobalBounds().width < window.getSize().x)
-            basket.move(speed * delta.asSeconds(), 0);
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && pos.y > 0)
-            basket.move(0, -speed * delta.asSeconds());
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && pos.y + basket.getGlobalBounds().height < window.getSize().y)
-            basket.move(0, speed * delta.asSeconds());
-
-        // Adiciona nova maçã a cada 10 segundos (até 6 no total)
-        if (appleClock.getElapsedTime().asSeconds() >= 10.f && applesToSpawn < 6) {
-            sf::Sprite newApple(appleTex);
-            //newApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
-            newApple.setTextureRect(sf::IntRect(
-                10,                       // crop 10 px from the left
-                9,                        // crop 9 px from the top
-                50 - 20,                  // crop 10 px from right, width becomes 30
-                appleTex.getSize().y - 11 // crop 2 px from bottom, total height adjusted
-                ));
-            newApple.setPosition(randomX(window.getSize().x - 50), 0);
-            apples.push_back(newApple);
-            applesToSpawn++;
-            appleClock.restart();
-        }
-
-        // Aumenta progressivamente a velocidade das maçãs
-        float elapsedSeconds = gameClock.getElapsedTime().asSeconds();
-        float currentAppleSpeed = baseAppleSpeed + elapsedSeconds * 4.0f;
-
-        // Movimento e colisão das maçãs
-        for (auto& apple : apples) {
-            apple.move(0, currentAppleSpeed * delta.asSeconds());
-
-            if (apple.getPosition().y > window.getSize().y) {
-                apple.setPosition(randomX(window.getSize().x - 50), 0);
-            }
-
-            if (basket.getGlobalBounds().intersects(apple.getGlobalBounds())) {
-                score++;
-                apple.setPosition(randomX(window.getSize().x - 50), 0);
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
+                paused = !paused;       //If you are paused, unpouses. If you are playing, pauses
             }
         }
 
-        int seconds = static_cast<int>(elapsedSeconds);
-        timeText.setString("Time: " + std::to_string(seconds));
-        scoreText.setString("Points: " + std::to_string(score));
+        if (!paused) {
+            // Movimento do cesto
+            sf::Vector2f pos = basket.getPosition();
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && pos.x > 0)
+                basket.move(-speed * delta.asSeconds(), 0);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && pos.x + basket.getGlobalBounds().width < window.getSize().x)
+                basket.move(speed * delta.asSeconds(), 0);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && pos.y > 0)
+                basket.move(0, -speed * delta.asSeconds());
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && pos.y + basket.getGlobalBounds().height < window.getSize().y)
+                basket.move(0, speed * delta.asSeconds());
 
-        if (seconds >= 60) {
-            window.close();
-
-            std::ofstream file("bestScores.txt", std::ios::app);
-            if (file.is_open()) {
-                file << playerName << " " << score << "\n";
-                file.close();
-            } else {
-                std::cerr << "Não foi possível abrir o ficheiro para guardar o score.\n";
+            // Adiciona nova maçã a cada 10 segundos (até 6 no total)
+            if (appleClock.getElapsedTime().asSeconds() >= 10.f && applesToSpawn < 6) {
+                sf::Sprite newApple(appleTex);
+                //newApple.setTextureRect(sf::IntRect(0, 0, 50, appleTex.getSize().y));
+                newApple.setTextureRect(sf::IntRect(
+                    10,                       // crop 10 px from the left
+                    9,                        // crop 9 px from the top
+                    50 - 20,                  // crop 10 px from right, width becomes 30
+                    appleTex.getSize().y - 11 // crop 2 px from bottom, total height adjusted
+                    ));
+                newApple.setPosition(randomX(window.getSize().x - 50), 50);
+                apples.push_back(newApple);
+                applesToSpawn++;
+                appleClock.restart();
             }
 
-            showGameOverScreen(font, playerName, score);
-            return;
+            // Aumenta progressivamente a velocidade das maçãs
+            float elapsedSeconds = gameClock.getElapsedTime().asSeconds();
+            float currentAppleSpeed = baseAppleSpeed + elapsedSeconds * 4.0f;
+
+            // Movimento e colisão das maçãs
+            for (auto& apple : apples) {
+                apple.move(0, currentAppleSpeed * delta.asSeconds());
+
+                if (apple.getPosition().y > window.getSize().y) {
+                    apple.setPosition(randomX(window.getSize().x - 50), 0);
+                }
+
+                if (basket.getGlobalBounds().intersects(apple.getGlobalBounds())) {
+                    score++;
+                    apple.setPosition(randomX(window.getSize().x - 50), 0);
+                }
+            }
+
+            int seconds = static_cast<int>(elapsedSeconds);
+            timeText.setString("Time: " + std::to_string(seconds));
+            scoreText.setString("Points: " + std::to_string(score));
+
+            if (seconds >= 60) {
+                window.close();
+
+                std::ofstream file("bestScores.txt", std::ios::app);
+                if (file.is_open()) {
+                    file << playerName << " " << score << "\n";
+                    file.close();
+                } else {
+                    std::cerr << "It wasnt possible to store the score.\n";
+                }
+
+                showGameOverScreen(font, playerName, score);
+                return;
+            }
         }
 
         window.clear();
         window.draw(background);
+        window.draw(topBar);                  // Desenhar a barra preta
         window.draw(basket);
-        for (auto& apple : apples)
+        for (auto& apple : apples){
             window.draw(apple);
+        }
         window.draw(timeText);
         window.draw(scoreText);
         window.draw(playerText);
+        if (paused) {
+            window.draw(pauseText);
+        }
         window.display();
     }
 }
@@ -294,7 +328,7 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
 std::string askPlayerName(sf::Font& font) {
     sf::RenderWindow inputWindow(sf::VideoMode(1024, 768), "Catcher - Name");
 
-    sf::Text prompt("Digite seu nome e pressione ENTER:", font, 24);
+    sf::Text prompt("Write your name (max 20 characters) and press ENTER:", font, 24);
     prompt.setPosition(20, 20);
     prompt.setFillColor(sf::Color::White);
 
@@ -316,12 +350,12 @@ std::string askPlayerName(sf::Font& font) {
                     if (!playerName.empty()) {
                         playerName.pop_back();
                     }
-                } else if (event.text.unicode == '\r' || event.text.unicode == '\n') {
-                    if (!playerName.empty()) {
-                        inputWindow.close();
-                    }
+                } else if ((event.text.unicode == '\r' || event.text.unicode == '\n') && !playerName.empty()) {
+                    inputWindow.close();
                 } else if (event.text.unicode < 128 && isprint(event.text.unicode)) {
-                    playerName += static_cast<char>(event.text.unicode);
+                    if (playerName.size() < 20) { // Limite de 20 caracteres
+                        playerName += static_cast<char>(event.text.unicode);
+                    }
                 }
                 inputText.setString(playerName);
             }
@@ -336,6 +370,7 @@ std::string askPlayerName(sf::Font& font) {
     return playerName;
 }
 
+
 int main() {
     sf::Font font;
     if (!font.loadFromFile("arial.ttf")) {
@@ -347,40 +382,48 @@ int main() {
         sf::RenderWindow menu(sf::VideoMode(1024, 768), "Catcher - Main Menu");
 
         sf::Text title("Catch Game", font, 48);
-        title.setPosition(350, 200);
+        title.setPosition(350, 100);
         title.setFillColor(sf::Color::White);
 
         sf::RectangleShape playButton(sf::Vector2f(250, 60));
-        playButton.setPosition(380, 320);
+        playButton.setPosition(380, 220);
         playButton.setFillColor(sf::Color::Green);
 
         sf::RectangleShape topScoresButton(sf::Vector2f(250, 60));
-        topScoresButton.setPosition(380, 420);
+        topScoresButton.setPosition(380, 320);
         topScoresButton.setFillColor(sf::Color::Blue);
 
         sf::RectangleShape quitButton(sf::Vector2f(250, 60));
-        quitButton.setPosition(380, 520);
+        quitButton.setPosition(380, 420);
         quitButton.setFillColor(sf::Color::Red);
 
         sf::RectangleShape creditsButton(sf::Vector2f(250, 60));
-        creditsButton.setPosition(380, 620);
+        creditsButton.setPosition(380, 520);
         creditsButton.setFillColor(sf::Color::Yellow);
 
+        sf::RectangleShape rulesButton(sf::Vector2f(250, 60));
+        rulesButton.setPosition(380, 620);
+        rulesButton.setFillColor(sf::Color::Cyan);
+
         sf::Text playText("Play", font, 30);
-        playText.setPosition(480, 335);
+        playText.setPosition(480, 235);
         playText.setFillColor(sf::Color::Black);
 
         sf::Text scoresText("Top 10 Scores", font, 25);
-        scoresText.setPosition(410, 435);
+        scoresText.setPosition(410, 335);
         scoresText.setFillColor(sf::Color::White);
 
         sf::Text quitText("Leave Game", font, 25);
-        quitText.setPosition(430, 535);
+        quitText.setPosition(430, 435);
         quitText.setFillColor(sf::Color::White);
 
         sf::Text creditsText("Credits", font, 25);
-        creditsText.setPosition(450, 635);
+        creditsText.setPosition(450, 535);
         creditsText.setFillColor(sf::Color::Black);
+
+        sf::Text rulesText("Rules", font, 25);
+        rulesText.setPosition(460, 635);
+        rulesText.setFillColor(sf::Color::Black);
 
         while (menu.isOpen()) {
             sf::Event event;
@@ -417,14 +460,14 @@ int main() {
                     else if (creditsButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         menu.close();
                         // Abre a janela de créditos
-                        sf::RenderWindow credits(sf::VideoMode(1024, 768), "Créditos");
+                        sf::RenderWindow credits(sf::VideoMode(1024, 768), "Catcher - Credits");
                         sf::Text text("Game developed by Rafael Louro \n"
                                       "Basket and apple designed by Rafael Louro in https://www.pixilart.com \n"
                                       "The other textures come from https://www.freepik.com", font, 24);
                         text.setFillColor(sf::Color::White);
                         text.setPosition(100, 300);
 
-                        sf::Text backText("Pressione Enter para voltar", font, 22);
+                        sf::Text backText("Press ENTER to return to the menu", font, 22);
                         backText.setFillColor(sf::Color::Yellow);
                         backText.setPosition(320, 600);
 
@@ -441,7 +484,38 @@ int main() {
                             credits.draw(backText);
                             credits.display();
                         }
+                        menu.create(sf::VideoMode(1024, 768), "Main Menu");
+                    }
+                    else if (rulesButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        menu.close();
+                        // Abre a janela de regras
+                        sf::RenderWindow rules(sf::VideoMode(1024, 768), "Catcher - Rules");
+                        sf::Text text("Rules: \n"
+                                      " - Catch the fruits with your basket! \n"
+                                      " - Move the basket using the arrows \n"
+                                      " - You have 1 minute to get has many points as possible \n"
+                                      " - You can pause the game using SPACE (NOT IMPLEMENTED YET) \n"
+                                      " - Good luck :)", font, 24);
+                        text.setFillColor(sf::Color::White);
+                        text.setPosition(100, 300);
 
+                        sf::Text backText("Press ENTER to return to the menu", font, 22);
+                        backText.setFillColor(sf::Color::Yellow);
+                        backText.setPosition(320, 600);
+
+                        while (rules.isOpen()) {
+                            sf::Event e;
+                            while (rules.pollEvent(e)) {
+                                if (e.type == sf::Event::Closed)
+                                    rules.close();
+                                if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
+                                    rules.close();
+                            }
+                            rules.clear(sf::Color::Black);
+                            rules.draw(text);
+                            rules.draw(backText);
+                            rules.display();
+                        }
                         menu.create(sf::VideoMode(1024, 768), "Main Menu");
                     }
                 }
@@ -457,6 +531,8 @@ int main() {
             menu.draw(quitText);
             menu.draw(creditsButton);
             menu.draw(creditsText);
+            menu.draw(rulesButton);
+            menu.draw(rulesText);
             menu.display();
         }
     }

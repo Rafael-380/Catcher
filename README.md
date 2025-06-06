@@ -1,9 +1,8 @@
-Bugs/ Don't forget:
+Bugs/Dont forget/upgrades
 - Add texture to the backgrounds of the pages (optional)
-- The basket has to have a max height it can go (optional)
-- The apples shouldn't spawn inside the timer/points
-    - Create a small strip of blacka at the top with the info
-- Add a max nr of characters in the name (optional)
-- Bug while saving scores with big names (unconfirmed)
-- Put everything in English
 - Texts are misalligned
+- The bounding boxes do not represent the real drawing of objects
+- First apple spawns out of the black line on top, the following spawn inside
+- Upgrade the Pause interface
+- Add bananas, 5pts, 1 every 10sec, spawn mechanics equal to apples, fast speed
+- Game over has to read the bestScores.txt to figure out if the player did a highscore 
