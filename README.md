@@ -6,3 +6,4 @@ Bugs/Dont forget/upgrades
 - Upgrade the Pause interface
 - Add bananas, 5pts, 1 every 10sec, spawn mechanics equal to apples, fast speed
 - Game over has to read the bestScores.txt to figure out if the player did a highscore 
+- The first try when I turn on the game with the file already created doesn't show in the top scores (unconfirmed)

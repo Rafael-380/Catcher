@@ -382,48 +382,60 @@ int main() {
         sf::RenderWindow menu(sf::VideoMode(1024, 768), "Catcher - Main Menu");
 
         sf::Text title("Catch Game", font, 48);
-        title.setPosition(350, 100);
         title.setFillColor(sf::Color::White);
+        // Calcula a posição X centralizada
+        title.setPosition(512 - title.getLocalBounds().width / 2, 100);
 
-        sf::RectangleShape playButton(sf::Vector2f(250, 60));
-        playButton.setPosition(380, 220);
+        const float windowWidth = 1024;
+        const float buttonWidth = 250;
+        const float buttonHeight = 60;
+        const float buttonMiddleX = (windowWidth - buttonWidth) / 2; // 768/2
+
+        sf::RectangleShape playButton(sf::Vector2f(buttonWidth, buttonHeight));
+        playButton.setPosition(buttonMiddleX, 220);
         playButton.setFillColor(sf::Color::Green);
 
-        sf::RectangleShape topScoresButton(sf::Vector2f(250, 60));
-        topScoresButton.setPosition(380, 320);
+        sf::RectangleShape topScoresButton(sf::Vector2f(buttonWidth, buttonHeight));
+        topScoresButton.setPosition(buttonMiddleX, 320);
         topScoresButton.setFillColor(sf::Color::Blue);
 
-        sf::RectangleShape quitButton(sf::Vector2f(250, 60));
-        quitButton.setPosition(380, 420);
+        sf::RectangleShape quitButton(sf::Vector2f(buttonWidth, buttonHeight));
+        quitButton.setPosition(buttonMiddleX, 420);
         quitButton.setFillColor(sf::Color::Red);
 
-        sf::RectangleShape creditsButton(sf::Vector2f(250, 60));
-        creditsButton.setPosition(380, 520);
+        sf::RectangleShape creditsButton(sf::Vector2f(buttonWidth, buttonHeight));
+        creditsButton.setPosition(buttonMiddleX, 520);
         creditsButton.setFillColor(sf::Color::Yellow);
 
-        sf::RectangleShape rulesButton(sf::Vector2f(250, 60));
-        rulesButton.setPosition(380, 620);
+        sf::RectangleShape rulesButton(sf::Vector2f(buttonWidth, buttonHeight));
+        rulesButton.setPosition(buttonMiddleX, 620);
         rulesButton.setFillColor(sf::Color::Cyan);
 
+        // Agora os textos centralizados horizontalmente sobre cada botão
         sf::Text playText("Play", font, 30);
-        playText.setPosition(480, 235);
         playText.setFillColor(sf::Color::Black);
+        playText.setPosition(
+            buttonMiddleX + (buttonWidth - playText.getLocalBounds().width) / 2, 235);
 
         sf::Text scoresText("Top 10 Scores", font, 25);
-        scoresText.setPosition(410, 335);
         scoresText.setFillColor(sf::Color::White);
+        scoresText.setPosition(
+            buttonMiddleX + (buttonWidth - scoresText.getLocalBounds().width) / 2, 335);
 
         sf::Text quitText("Leave Game", font, 25);
-        quitText.setPosition(430, 435);
         quitText.setFillColor(sf::Color::White);
+        quitText.setPosition(
+            buttonMiddleX + (buttonWidth - quitText.getLocalBounds().width) / 2, 435);
 
         sf::Text creditsText("Credits", font, 25);
-        creditsText.setPosition(450, 535);
         creditsText.setFillColor(sf::Color::Black);
+        creditsText.setPosition(
+            buttonMiddleX + (buttonWidth - creditsText.getLocalBounds().width) / 2, 535);
 
         sf::Text rulesText("Rules", font, 25);
-        rulesText.setPosition(460, 635);
         rulesText.setFillColor(sf::Color::Black);
+        rulesText.setPosition(
+            buttonMiddleX + (buttonWidth - rulesText.getLocalBounds().width) / 2, 635);
 
         while (menu.isOpen()) {
             sf::Event event;
@@ -461,6 +473,13 @@ int main() {
                         menu.close();
                         // Abre a janela de créditos
                         sf::RenderWindow credits(sf::VideoMode(1024, 768), "Catcher - Credits");
+
+                        sf::Text title("Catch Game", font, 48);
+                        title.setFillColor(sf::Color::White);
+                        // Calcula a posição X centralizada
+                        title.setPosition(512 - title.getLocalBounds().width / 2, 100);
+
+
                         sf::Text text("Game developed by Rafael Louro \n"
                                       "Basket and apple designed by Rafael Louro in https://www.pixilart.com \n"
                                       "The other textures come from https://www.freepik.com", font, 24);
@@ -469,7 +488,11 @@ int main() {
 
                         sf::Text backText("Press ENTER to return to the menu", font, 22);
                         backText.setFillColor(sf::Color::Yellow);
-                        backText.setPosition(320, 600);
+                        backText.setPosition(512 - text.getLocalBounds().width / 2, 600); //Middle, down
+
+
+
+
 
                         while (credits.isOpen()) {
                             sf::Event e;
