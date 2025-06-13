@@ -37,7 +37,23 @@ std::vector<ScoreEntry> loadTopScores(const std::string& filename = "bestScores.
     return scores;
 }
 
+
 void showTopScores(sf::Font& font, const sf::Texture& backgroundTexture) {
+    const std::string filename = "bestScores.txt";
+
+    // Verifica se o ficheiro existe; se não, cria um vazio
+    if (!std::filesystem::exists(filename)) {
+        std::ofstream createFile(filename);
+        if (!createFile) {
+            std::cerr << "Erro ao criar " << filename << "\n";
+            return; // sai da função se falhar ao criar
+        }
+
+        // Opcional: adicionar pontuações iniciais
+        // for (int i = 0; i < 10; ++i)
+        //     createFile << "Player" << i + 1 << " 0\n";
+    }
+
     auto scores = loadTopScores();
 
     sf::Sprite background(backgroundTexture);
@@ -78,7 +94,6 @@ void showTopScores(sf::Font& font, const sf::Texture& backgroundTexture) {
                 topWindow.close();
         }
 
-        //topWindow.clear(sf::Color::Black);
         topWindow.clear();
         topWindow.draw(background);
         topWindow.draw(title);
@@ -88,6 +103,7 @@ void showTopScores(sf::Font& font, const sf::Texture& backgroundTexture) {
         topWindow.display();
     }
 }
+
 
 float randomX(float maxX) {
     static std::random_device rd;
@@ -261,7 +277,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
 
             if (seconds >= 60) {
                 window.close();
-
+                /*
                 std::ofstream file("bestScores.txt", std::ios::app);
                 if (file.is_open()) {
                     file << playerName << " " << score << "\n";
@@ -269,7 +285,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
                 } else {
                     std::cerr << "It wasnt possible to store the score.\n";
                 }
-
+                */
                 showGameOverScreen(font, playerName, score);
                 return;
             }
@@ -371,6 +387,34 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
         overWindow.draw(continueText);
         overWindow.display();
     }
+    while (overWindow.isOpen()) {
+        sf::Event event;
+        while (overWindow.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                overWindow.close();
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
+                overWindow.close();
+        }
+
+        overWindow.clear(sf::Color::Black);
+        overWindow.draw(gameOverText);
+        overWindow.draw(playerText);
+        overWindow.draw(scoreText);
+        overWindow.draw(recordText);
+        overWindow.draw(continueText);
+        overWindow.display();
+    }
+
+    // <-- ADICIONAR AQUI
+    std::ofstream outFile("bestScores.txt", std::ios::app);
+    if (outFile.is_open()) {
+        outFile << playerName << " " << score << "\n";
+        outFile.close();
+    } else {
+        std::cerr << "Failed to save score to bestScores.txt\n";
+    }
+
 }
 
 // Pedir nome do jogador numa janela SFML
@@ -419,6 +463,89 @@ std::string askPlayerName(sf::Font& font) {
     return playerName;
 }
 
+void showCredits(sf::Font& font, const sf::Texture& backgroundTexture) {
+    sf::Sprite background(backgroundTexture);
+    background.setColor(sf::Color(255, 255, 255, 128));
+    sf::Vector2u textureSize = backgroundTexture.getSize();
+    background.setScale(1024.f / textureSize.x, 768.f / textureSize.y);
+
+    sf::RenderWindow credits(sf::VideoMode(1024, 768), "Catcher - Credits");
+
+    sf::Text title("Credits", font, 48);
+    title.setFillColor(sf::Color::White);
+    title.setPosition(50, 20);
+
+    sf::Text text("Game developed by Rafael Louro with the help of AI tools\n"
+                  "Basket and apple designed by Rafael Louro at https://www.pixilart.com\n"
+                  "Other textures from https://www.freepik.com", font, 24);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(50, 120);
+
+    sf::Text backText("Press ENTER to return to the menu", font, 30);
+    backText.setFillColor(sf::Color::Yellow);
+    backText.setPosition(50, 650);
+
+    while (credits.isOpen()) {
+        sf::Event e;
+        while (credits.pollEvent(e)) {
+            if (e.type == sf::Event::Closed)
+                credits.close();
+            if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
+                credits.close();
+        }
+
+        credits.clear();
+        credits.draw(background);
+        credits.draw(title);
+        credits.draw(text);
+        credits.draw(backText);
+        credits.display();
+    }
+}
+
+void showRules(sf::Font& font, const sf::Texture& backgroundTexture) {
+    sf::Sprite background(backgroundTexture);
+    background.setColor(sf::Color(255, 255, 255, 128));
+    sf::Vector2u textureSize = backgroundTexture.getSize();
+    background.setScale(1024.f / textureSize.x, 768.f / textureSize.y);
+
+    sf::RenderWindow rules(sf::VideoMode(1024, 768), "Catcher - Rules");
+
+    sf::Text title("Game Rules", font, 48);
+    title.setFillColor(sf::Color::White);
+    title.setPosition(50, 20);
+
+    sf::Text text("Rules:\n"
+                  " - Catch the fruits with your basket!\n"
+                  " - Move the basket using the arrow keys\n"
+                  " - You have 1 minute to get as many points as possible\n"
+                  " - You can pause the game using SPACE\n"
+                  " - Good luck! :)", font, 24);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(50, 120);
+
+    sf::Text backText("Press ENTER to return to the menu", font, 30);
+    backText.setFillColor(sf::Color::Yellow);
+    backText.setPosition(50, 650);
+
+    while (rules.isOpen()) {
+        sf::Event e;
+        while (rules.pollEvent(e)) {
+            if (e.type == sf::Event::Closed)
+                rules.close();
+            if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
+                rules.close();
+        }
+
+        rules.clear();
+        rules.draw(background);
+        rules.draw(title);
+        rules.draw(text);
+        rules.draw(backText);
+        rules.display();
+    }
+}
+
 
 int main() {
     sf::Font font;
@@ -447,7 +574,9 @@ int main() {
         sf::RenderWindow menu(sf::VideoMode(1024, 768), "Catcher - Main Menu");
 
         sf::Text title("Catch Game", font, 48);
-        title.setFillColor(sf::Color::White);
+        title.setFillColor(sf::Color::Yellow);
+        title.setOutlineColor(sf::Color::Black);
+        title.setOutlineThickness(2);
         // Calcula a posição X centralizada
         title.setPosition(512 - title.getLocalBounds().width / 2, 100);
 
@@ -523,11 +652,13 @@ int main() {
                     }
                     else if (topScoresButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         menu.close();
-                        if (!std::filesystem::exists("bestScores.txt")) {
+                        /*if (!std::filesystem::exists("bestScores.txt")) {
                             std::cout << "bestScores.txt nao existe!\n";
                         } else {
                             showTopScores(font, backgroundTexture);
-                        }
+                        }*/
+                        menu.close();
+                        showTopScores(font, backgroundTexture);
                         menu.create(sf::VideoMode(1024, 768), "Main Menu"); // Recria o menu após fechar a janela Top Scores
                     }
                     else if (quitButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
@@ -536,71 +667,14 @@ int main() {
                     }
                     else if (creditsButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         menu.close();
-                        // Abre a janela de créditos
-                        sf::RenderWindow credits(sf::VideoMode(1024, 768), "Catcher - Credits");
-
-                        sf::Text title("Catch Game", font, 48);
-                        title.setFillColor(sf::Color::White);
-                        // Calcula a posição X centralizada
-                        title.setPosition(512 - title.getLocalBounds().width / 2, 100);
-
-
-                        sf::Text text("Game developed by Rafael Louro  with the help of AI tools\n"
-                                      "Basket and apple designed by Rafael Louro in https://www.pixilart.com \n"
-                                      "The other textures come from https://www.freepik.com", font, 24);
-                        text.setFillColor(sf::Color::White);
-                        text.setPosition(50, 50);
-
-                        sf::Text backText("Press ENTER to return to the menu", font, 24);
-                        backText.setFillColor(sf::Color::Yellow);
-                        backText.setPosition(50, 200);
-
-                        while (credits.isOpen()) {
-                            sf::Event e;
-                            while (credits.pollEvent(e)) {
-                                if (e.type == sf::Event::Closed)
-                                    credits.close();
-                                if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
-                                    credits.close();
-                            }
-                            credits.clear(sf::Color::Black);
-                            credits.draw(text);
-                            credits.draw(backText);
-                            credits.display();
-                        }
-                        menu.create(sf::VideoMode(1024, 768), "Main Menu");
+                        showCredits(font, backgroundTexture);
                     }
                     else if (rulesButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         menu.close();
-                        // Abre a janela de regras
-                        sf::RenderWindow rules(sf::VideoMode(1024, 768), "Catcher - Rules");
-                        sf::Text text("Rules: \n"
-                                      " - Catch the fruits with your basket! \n"
-                                      " - Move the basket using the arrows \n"
-                                      " - You have 1 minute to get has many points as possible \n"
-                                      " - You can pause the game using SPACE \n"
-                                      " - Good luck :)", font, 24);
-                        text.setFillColor(sf::Color::White);
-                        text.setPosition(50, 50);
-
-                        sf::Text backText("Press ENTER to return to the menu", font, 24);
-                        backText.setFillColor(sf::Color::Yellow);
-                        backText.setPosition(50, 300);
-
-                        while (rules.isOpen()) {
-                            sf::Event e;
-                            while (rules.pollEvent(e)) {
-                                if (e.type == sf::Event::Closed)
-                                    rules.close();
-                                if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Enter)
-                                    rules.close();
-                            }
-                            rules.clear(sf::Color::Black);
-                            rules.draw(text);
-                            rules.draw(backText);
-                            rules.display();
-                        }
-                        menu.create(sf::VideoMode(1024, 768), "Main Menu");
+                        showRules(font, backgroundTexture);
+                    }
+                    else{
+                    menu.create(sf::VideoMode(1024, 768), "Main Menu");
                     }
                 }
             }

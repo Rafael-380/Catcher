@@ -1,9 +1,9 @@
 Bugs/Dont forget/upgrades
-- Add texture to the backgrounds of the pages
-- Texts are misalligned
+- Add trees to the game window
 - The bounding boxes do not represent the real drawing of objects
 - Add bananas, 5pts, 1 every 10sec, spawn mechanics equal to apples, fast speed (optional)
-- Game over doesn't show that you beat the previous record because the value enters the .txt file when the game finishes
-- The first try when I turn on the game with the file already created doesn't show in the top scores (unconfirmed)
-- Top score must create the bestScores.txt file when he can't find it. 
-- Top score must output: "No scores yet" if it opens the file and there are no players or if it creates it
+- Do secondary check if top10 creates an empty file
+- Finish game over logic of equal highscore and text allignment 
+- Add backgound and back rectangle in the secondary tables (ex: when asking for name)
+- Make the basket faster (and maybe bigger too)
+- Fix the apple mess of the calling of the first apple and all the other apples
