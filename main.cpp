@@ -37,8 +37,13 @@ std::vector<ScoreEntry> loadTopScores(const std::string& filename = "bestScores.
     return scores;
 }
 
-void showTopScores(sf::Font& font) {
+void showTopScores(sf::Font& font, const sf::Texture& backgroundTexture) {
     auto scores = loadTopScores();
+
+    sf::Sprite background(backgroundTexture);
+    background.setColor(sf::Color(255, 255, 255, 128));
+    sf::Vector2u textureSize = backgroundTexture.getSize();
+    background.setScale(1024.f / textureSize.x, 768.f / textureSize.y);
 
     sf::RenderWindow topWindow(sf::VideoMode(1024, 768), "Catcher - Top 10");
 
@@ -73,7 +78,9 @@ void showTopScores(sf::Font& font) {
                 topWindow.close();
         }
 
-        topWindow.clear(sf::Color::Black);
+        //topWindow.clear(sf::Color::Black);
+        topWindow.clear();
+        topWindow.draw(background);
         topWindow.draw(title);
         for (auto& t : scoreTexts)
             topWindow.draw(t);
@@ -420,6 +427,22 @@ int main() {
         return 1;
     }
 
+    // AQUI entra o carregamento do fundo:
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("background.png")) {
+        std::cerr << "Failed to load background.png\n";
+        return 1;
+    }
+    sf::Sprite background(backgroundTexture);
+    background.setColor(sf::Color(255, 255, 255, 128)); // 50% de opacidade
+
+    // Escala o fundo para caber na janela
+    sf::Vector2u textureSize = backgroundTexture.getSize();
+    float scaleX = 1024.f / textureSize.x;
+    float scaleY = 768.f / textureSize.y;
+    background.setScale(scaleX, scaleY);
+
+
     while (true) {
         sf::RenderWindow menu(sf::VideoMode(1024, 768), "Catcher - Main Menu");
 
@@ -503,7 +526,7 @@ int main() {
                         if (!std::filesystem::exists("bestScores.txt")) {
                             std::cout << "bestScores.txt nao existe!\n";
                         } else {
-                            showTopScores(font);
+                            showTopScores(font, backgroundTexture);
                         }
                         menu.create(sf::VideoMode(1024, 768), "Main Menu"); // Recria o menu após fechar a janela Top Scores
                     }
@@ -531,10 +554,6 @@ int main() {
                         sf::Text backText("Press ENTER to return to the menu", font, 24);
                         backText.setFillColor(sf::Color::Yellow);
                         backText.setPosition(50, 200);
-
-
-
-
 
                         while (credits.isOpen()) {
                             sf::Event e;
@@ -586,7 +605,8 @@ int main() {
                 }
             }
 
-            menu.clear(sf::Color::Black);
+            menu.clear();
+            menu.draw(background); // desenha o fundo com transparência
             menu.draw(title);
             menu.draw(playButton);
             menu.draw(topScoresButton);
