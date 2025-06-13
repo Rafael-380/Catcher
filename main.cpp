@@ -43,11 +43,11 @@ void showTopScores(sf::Font& font) {
     sf::RenderWindow topWindow(sf::VideoMode(1024, 768), "Catcher - Top 10");
 
     sf::Text title("Top 10 Scores", font, 48);
-    title.setPosition(150, 20);
+    title.setPosition(50, 20);
     title.setFillColor(sf::Color::White);
 
     sf::Text continueText("Press Enter to return to menu", font, 30);
-    continueText.setPosition(250, 650);
+    continueText.setPosition(50, 650);
     continueText.setFillColor(sf::Color::Yellow);
 
     std::vector<sf::Text> scoreTexts;
@@ -55,7 +55,7 @@ void showTopScores(sf::Font& font) {
         sf::Text text;
         text.setFont(font);
         text.setCharacterSize(32);
-        text.setFillColor(sf::Color::Yellow);
+        text.setFillColor(sf::Color::White);
         text.setPosition(50, 100 + i * 40);
         std::ostringstream oss;
         oss << (i + 1) << ". " << scores[i].name << " - " << scores[i].score;
@@ -180,7 +180,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
     scoreText.setPosition(windowWidth - scoreTextWidth - 30, 5);  // Margem direita
 
     sf::Text pauseText("PAUSED\nPress SPACE to resume", font, 48);
-    pauseText.setFillColor(sf::Color::White);
+    pauseText.setFillColor(sf::Color::Yellow);
     pauseText.setOutlineColor(sf::Color::Black);
     pauseText.setOutlineThickness(2);
     pauseText.setPosition(250, 300); // Ajusta conforme necessário
@@ -239,12 +239,12 @@ void runGame(sf::Font& font, const std::string& playerName) {
                 apple.move(0, currentAppleSpeed * delta.asSeconds());
 
                 if (apple.getPosition().y > window.getSize().y) {
-                    apple.setPosition(randomX(window.getSize().x - 50), 0);
+                    apple.setPosition(randomX(window.getSize().x - 50), 50);
                 }
 
                 if (basket.getGlobalBounds().intersects(apple.getGlobalBounds())) {
                     score++;
-                    apple.setPosition(randomX(window.getSize().x - 50), 0);
+                    apple.setPosition(randomX(window.getSize().x - 50), 50);
                 }
             }
 
@@ -285,7 +285,37 @@ void runGame(sf::Font& font, const std::string& playerName) {
     }
 }
 
+
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score) {
+    // Determinar o maior score existente
+    int maxScore = 0;
+    std::ifstream inFile("bestScores.txt");
+    if (inFile.is_open()) {
+        std::string line;
+        while (std::getline(inFile, line)) {
+            std::istringstream iss(line);
+            std::string token;
+            std::vector<std::string> tokens;
+
+            while (iss >> token)
+                tokens.push_back(token);
+
+            if (tokens.size() < 2) continue;
+
+            try {
+                int pastScore = std::stoi(tokens.back());
+                if (pastScore > maxScore)
+                    maxScore = pastScore;
+            } catch (...) {
+                continue; // ignora linhas mal formatadas
+            }
+        }
+        inFile.close();
+    }
+
+    bool isNewRecord = score > maxScore;
+
+    // Criar janela de Game Over
     sf::RenderWindow overWindow(sf::VideoMode(1024, 768), "Catcher - Game Over");
 
     sf::Text gameOverText("Game Over", font, 60);
@@ -299,6 +329,18 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
     sf::Text scoreText("Score: " + std::to_string(score), font, 40);
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(440, 350);
+
+    sf::Text recordText;
+    if (isNewRecord) {
+        recordText.setString("NEW RECORD!");
+        recordText.setFillColor(sf::Color::Green);
+    } else {
+        recordText.setString("High score: " + std::to_string(maxScore));
+        recordText.setFillColor(sf::Color(200, 200, 200));
+    }
+    recordText.setFont(font);
+    recordText.setCharacterSize(32);
+    recordText.setPosition(390, 420);
 
     sf::Text continueText("Press Enter to return to menu", font, 30);
     continueText.setFillColor(sf::Color::Yellow);
@@ -318,11 +360,11 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
         overWindow.draw(gameOverText);
         overWindow.draw(playerText);
         overWindow.draw(scoreText);
+        overWindow.draw(recordText);
         overWindow.draw(continueText);
         overWindow.display();
     }
 }
-
 
 // Pedir nome do jogador numa janela SFML
 std::string askPlayerName(sf::Font& font) {
@@ -480,15 +522,15 @@ int main() {
                         title.setPosition(512 - title.getLocalBounds().width / 2, 100);
 
 
-                        sf::Text text("Game developed by Rafael Louro \n"
+                        sf::Text text("Game developed by Rafael Louro  with the help of AI tools\n"
                                       "Basket and apple designed by Rafael Louro in https://www.pixilart.com \n"
                                       "The other textures come from https://www.freepik.com", font, 24);
                         text.setFillColor(sf::Color::White);
-                        text.setPosition(100, 300);
+                        text.setPosition(50, 50);
 
-                        sf::Text backText("Press ENTER to return to the menu", font, 22);
+                        sf::Text backText("Press ENTER to return to the menu", font, 24);
                         backText.setFillColor(sf::Color::Yellow);
-                        backText.setPosition(512 - text.getLocalBounds().width / 2, 600); //Middle, down
+                        backText.setPosition(50, 200);
 
 
 
@@ -517,14 +559,14 @@ int main() {
                                       " - Catch the fruits with your basket! \n"
                                       " - Move the basket using the arrows \n"
                                       " - You have 1 minute to get has many points as possible \n"
-                                      " - You can pause the game using SPACE (NOT IMPLEMENTED YET) \n"
+                                      " - You can pause the game using SPACE \n"
                                       " - Good luck :)", font, 24);
                         text.setFillColor(sf::Color::White);
-                        text.setPosition(100, 300);
+                        text.setPosition(50, 50);
 
-                        sf::Text backText("Press ENTER to return to the menu", font, 22);
+                        sf::Text backText("Press ENTER to return to the menu", font, 24);
                         backText.setFillColor(sf::Color::Yellow);
-                        backText.setPosition(320, 600);
+                        backText.setPosition(50, 300);
 
                         while (rules.isOpen()) {
                             sf::Event e;
