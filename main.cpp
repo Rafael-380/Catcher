@@ -137,6 +137,12 @@ void runGame(sf::Font& font, const std::string& playerName) {
         return;
     }
 
+    sf::Texture treeTex;
+    if (!treeTex.loadFromFile("tree.png")) {
+        std::cerr << "Failed to load tree.png\n";
+        return;
+    }
+
     sf::RectangleShape topBar;
     topBar.setSize(sf::Vector2f(window.getSize().x, 30));
     topBar.setPosition(0, 0);
@@ -147,6 +153,18 @@ void runGame(sf::Font& font, const std::string& playerName) {
         static_cast<float>(window.getSize().x) / backgroundTex.getSize().x,
         static_cast<float>(window.getSize().y) / backgroundTex.getSize().y
     );
+
+    std::vector<sf::Sprite> trees;
+    float spacing = 150.f; // espaço entre árvores
+    int numTrees = 6;      // número de árvores
+
+    for (int i = 0; i < numTrees; ++i) {
+        sf::Sprite tree(treeTex);
+        tree.setScale(0.2f, 0.2f);
+        tree.setPosition(50.f + i * spacing, 400.f); // muda só o X
+        trees.push_back(tree);
+    }
+
 
     sf::Sprite basket(basketTex);
     //basket.setTextureRect(sf::IntRect(0, 0, 50, basketTex.getSize().y));
@@ -170,7 +188,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
     firstApple.setPosition(randomX(window.getSize().x - 50), 50);
     apples.push_back(firstApple);
 
-    float speed = 300.f;
+    float speed = 400.f;
     float baseAppleSpeed = 200.f;
 
     // Dimensões da janela
@@ -293,6 +311,9 @@ void runGame(sf::Font& font, const std::string& playerName) {
 
         window.clear();
         window.draw(background);
+        for (auto& tree : trees){
+            window.draw(tree);
+        }
         window.draw(topBar);                  // Desenhar a barra preta
         window.draw(basket);
         for (auto& apple : apples){
@@ -308,7 +329,7 @@ void runGame(sf::Font& font, const std::string& playerName) {
     }
 }
 
-
+/*
 void showGameOverScreen(sf::Font& font, const std::string& playerName, int score) {
     // Determinar o maior score existente
     int maxScore = 0;
@@ -415,38 +436,158 @@ void showGameOverScreen(sf::Font& font, const std::string& playerName, int score
         std::cerr << "Failed to save score to bestScores.txt\n";
     }
 
+}*/
+
+void showGameOverScreen(sf::Font& font, const std::string& playerName, int score) {
+    // Determinar o maior score existente
+    int maxScore = 0;
+    std::ifstream inFile("bestScores.txt");
+    if (inFile.is_open()) {
+        std::string line;
+        while (std::getline(inFile, line)) {
+            std::istringstream iss(line);
+            std::string token;
+            std::vector<std::string> tokens;
+
+            while (iss >> token)
+                tokens.push_back(token);
+
+            if (tokens.size() < 2) continue;
+
+            try {
+                int pastScore = std::stoi(tokens.back());
+                if (pastScore > maxScore)
+                    maxScore = pastScore;
+            } catch (...) {
+                continue;
+            }
+        }
+        inFile.close();
+    }
+
+    bool isNewRecord = score > maxScore;
+
+    sf::RenderWindow overWindow(sf::VideoMode(1024, 768), "Catcher - Game Over");
+
+    // Carregar fundo com transparência
+    sf::Texture backgroundTex;
+    if (!backgroundTex.loadFromFile("background.png")) {
+        std::cerr << "Erro ao carregar background.png\n";
+    }
+    sf::Sprite background(backgroundTex);
+    background.setColor(sf::Color(255, 255, 255, 128)); // transparência
+    background.setScale(
+        static_cast<float>(overWindow.getSize().x) / backgroundTex.getSize().x,
+        static_cast<float>(overWindow.getSize().y) / backgroundTex.getSize().y
+        );
+
+    sf::Text gameOverText("Game Over", font, 60);
+    gameOverText.setFillColor(sf::Color::Red);
+    gameOverText.setPosition(360, 150);
+
+    sf::Text playerText("Player: " + playerName, font, 50);
+    playerText.setFillColor(sf::Color::White);
+    playerText.setPosition(360, 250);
+
+    sf::Text scoreText("Score: " + std::to_string(score), font, 40);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setPosition(440, 350);
+
+    sf::Text recordText;
+    if (isNewRecord) {
+        recordText.setString("NEW RECORD!");
+        recordText.setFillColor(sf::Color::Green);
+    } else {
+        recordText.setString("High score: " + std::to_string(maxScore));
+        recordText.setFillColor(sf::Color(200, 200, 200));
+    }
+    recordText.setFont(font);
+    recordText.setCharacterSize(32);
+    recordText.setPosition(390, 420);
+
+    sf::Text continueText("Press Enter to return to menu", font, 30);
+    continueText.setFillColor(sf::Color::Yellow);
+    continueText.setPosition(320, 500);
+
+    // Loop da janela
+    while (overWindow.isOpen()) {
+        sf::Event event;
+        while (overWindow.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                overWindow.close();
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
+                overWindow.close();
+        }
+
+        overWindow.clear();
+        overWindow.draw(background);       // fundo transparente
+        overWindow.draw(gameOverText);
+        overWindow.draw(playerText);
+        overWindow.draw(scoreText);
+        overWindow.draw(recordText);
+        overWindow.draw(continueText);
+        overWindow.display();
+    }
+
+    // Salvar score ao fechar
+    std::ofstream outFile("bestScores.txt", std::ios::app);
+    if (outFile.is_open()) {
+        outFile << playerName << " " << score << "\n";
+        outFile.close();
+    } else {
+        std::cerr << "Failed to save score to bestScores.txt\n";
+    }
 }
+
 
 // Pedir nome do jogador numa janela SFML
 std::string askPlayerName(sf::Font& font) {
     sf::RenderWindow inputWindow(sf::VideoMode(1024, 768), "Catcher - Name");
 
+    // Carregar a textura de fundo
+    sf::Texture backgroundTex;
+    if (!backgroundTex.loadFromFile("background.png")) {
+        std::cerr << "Erro ao carregar background.png\n";
+        return "";
+    }
+
+    sf::Sprite background(backgroundTex);
+    background.setColor(sf::Color(255, 255, 255, 128)); // Adiciona transparência
+    background.setScale(
+        static_cast<float>(inputWindow.getSize().x) / backgroundTex.getSize().x,
+        static_cast<float>(inputWindow.getSize().y) / backgroundTex.getSize().y
+        );
+
+    // Texto de instrução
     sf::Text prompt("Write your name (max 20 characters) and press ENTER:", font, 24);
-    prompt.setPosition(20, 20);
+    prompt.setPosition(20, 40); // Ajustado para baixo por causa da barra
     prompt.setFillColor(sf::Color::White);
 
+    // Texto de entrada do jogador
     sf::Text inputText("", font, 30);
-    inputText.setPosition(20, 80);
+    inputText.setPosition(20, 100);
     inputText.setFillColor(sf::Color::Yellow);
 
     std::string playerName;
 
+    // Loop da janela
     while (inputWindow.isOpen()) {
         sf::Event event;
         while (inputWindow.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 inputWindow.close();
-                return ""; // janela fechada sem nome
+                return ""; // Sai sem nome se a janela for fechada
             }
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == '\b') { // Backspace
+                if (event.text.unicode == '\b') {
                     if (!playerName.empty()) {
                         playerName.pop_back();
                     }
                 } else if ((event.text.unicode == '\r' || event.text.unicode == '\n') && !playerName.empty()) {
                     inputWindow.close();
                 } else if (event.text.unicode < 128 && isprint(event.text.unicode)) {
-                    if (playerName.size() < 20) { // Limite de 20 caracteres
+                    if (playerName.size() < 20) {
                         playerName += static_cast<char>(event.text.unicode);
                     }
                 }
@@ -454,14 +595,17 @@ std::string askPlayerName(sf::Font& font) {
             }
         }
 
-        inputWindow.clear(sf::Color::Black);
-        inputWindow.draw(prompt);
-        inputWindow.draw(inputText);
+        inputWindow.clear();
+        inputWindow.draw(background);   // fundo
+        inputWindow.draw(prompt);       // texto de instrução
+        inputWindow.draw(inputText);    // texto digitado
         inputWindow.display();
     }
 
     return playerName;
 }
+
+
 
 void showCredits(sf::Font& font, const sf::Texture& backgroundTexture) {
     sf::Sprite background(backgroundTexture);
@@ -651,12 +795,6 @@ int main() {
                         menu.create(sf::VideoMode(1024, 768), "Main Menu");
                     }
                     else if (topScoresButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
-                        menu.close();
-                        /*if (!std::filesystem::exists("bestScores.txt")) {
-                            std::cout << "bestScores.txt nao existe!\n";
-                        } else {
-                            showTopScores(font, backgroundTexture);
-                        }*/
                         menu.close();
                         showTopScores(font, backgroundTexture);
                         menu.create(sf::VideoMode(1024, 768), "Main Menu"); // Recria o menu após fechar a janela Top Scores
